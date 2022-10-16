@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cmath>
+#include <ctime>
 #include <vector>
 #include <functional>
 #include <random>
@@ -45,18 +46,19 @@ domain_t hill_climbing(const function<double(domain_t)> &f, domain_t minimal_d, 
 }
 
 int main() {
-    auto rastriginFunc = [](double x) {return 10+(pow(x,2)-10*cos(3.14*x));;};
-    double rastriginCurrentX = -437;
+    srand((unsigned)time(0));
+    auto rastriginFunc = [](double x) {return 10+(pow(x,2)-10*cos(3.14*x));};
+    double rastriginCurrentX = -(rand()%10000)+1;;
+    double numberToCompare = rastriginCurrentX;
     auto generateRastrigin = [&]() {
-        rastriginCurrentX+= 1.0/128.0;
-        if (rastriginCurrentX >= 437) throw invalid_argument("finished");
+        rastriginCurrentX+= 1.0;
+        if (rastriginCurrentX >= (-numberToCompare)) throw invalid_argument("finished");
         return rastriginCurrentX;
     };
     auto best_point = brute_force(rastriginFunc, generateRastrigin);
     cout << "best x = " << best_point << endl;
     auto rastriginFuncVector = [](domain_t x) {return 10+(pow(x[0],2)-10*cos(3.14*x[0]));};
-    auto best2 = hill_climbing(rastriginFuncVector, {-437},{437},100000);
+    auto best2 = hill_climbing(rastriginFuncVector, {rastriginCurrentX},{-rastriginCurrentX},100000);
     cout << "best x = " << best2[0] << endl;
     return 0;
 }
-
