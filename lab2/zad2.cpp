@@ -6,48 +6,57 @@
 using namespace std;
 using func = function<double(vector<string>)>;
 
-auto brute_force = [](auto func, auto domain) {
-    auto current_px = domain();
-    auto currentPY = domain();
-    auto best_pointX = current_px;
-    auto bestPointY = currentPY;
+auto brute_force = [](auto f, auto domain) {
+    auto current_p = domain();
+    auto best_point = current_p;
     try {
         while (true) {
-            if (func(current_px, currentPY) < func(best_pointX, bestPointY)) {
-                best_pointX = current_px;
-                bestPointY = currentPY;
+            if (f(current_p) < f(best_point)) {
+                best_point = current_p;
             }
-            current_px = domain();
-            currentPY = domain();
+            current_p = domain();
         }
     } catch (exception &e) {
     }
-    double arr[2] = {best_pointX, bestPointY};
-    return *arr;
+    return best_point;
 };
-/*using domain_t = vector<double>;
+
+using domain_t = vector<double>;
 random_device rd;
-mt19937 mt_generator(rd());*/
+mt19937 mt_generator(rd());
+
+domain_t hill_climbing(const function<double(domain_t)> &f, domain_t minimal_d, domain_t maximal_d, int max_iterations) {
+    domain_t current_p(minimal_d.size());
+    for (int i = 0; i < minimal_d.size(); i++) {
+        uniform_real_distribution<double> dist(minimal_d[i], maximal_d[i]);
+        current_p[i] = dist(mt_generator);
+    }
+    for (int iteration = 0; iteration < max_iterations; iteration++) {
+        domain_t new_p(minimal_d.size());
+        for (int i = 0; i < minimal_d.size(); i++) {
+            uniform_real_distribution<double> dist(-1.0/128.0, 1.0/128.0);
+            new_p[i] = current_p[i] + dist(mt_generator);
+        }
+        if (f(current_p) > f(new_p)) {
+            current_p = new_p;
+        }
+    }
+    return current_p;
+}
 
 int main() {
-    auto boothFunc = [](double x, double y) {return pow(x+2*y-7, 2)+pow(2*x+y-5, 2);};
-    double chosenX = -21;
-    double chosenY = -37;
-    auto boothGeneratorForX = [&]() {
-        chosenX+= 1.0/12;
-        if (chosenX >= 21) throw invalid_argument("finished");
-        return chosenX;
+    auto rastriginFunc = [](double x) {return 10+(pow(x,2)-10*cos(3.14*x));;};
+    double rastriginCurrentX = -437;
+    auto generateRastrigin = [&]() {
+        rastriginCurrentX+= 1.0/128.0;
+        if (rastriginCurrentX >= 437) throw invalid_argument("finished");
+        return rastriginCurrentX;
     };
-
-    auto boothGeneratorForY = [&]() {
-        chosenY+= 1.0/12;
-        if (chosenX >= 37) throw invalid_argument("finished");
-        return chosenY;
-    };
-
-    double bestPoints[2] = {brute_force(boothFunc, boothGeneratorForX)};
-    double bestPointX[1] = {bestPoints[0]};
-    double bestPointY[1] = {bestPoints[1]};
-    cout << "best x = " << bestPointX[0] << " best y = " << bestPointY[0] << endl;
+    auto best_point = brute_force(rastriginFunc, generateRastrigin);
+    cout << "best x = " << best_point << endl;
+    auto rastriginFuncVector = [](domain_t x) {return 10+(pow(x[0],2)-10*cos(3.14*x[0]));};
+    auto best2 = hill_climbing(rastriginFuncVector, {-437},{437},100000);
+    cout << "best x = " << best2[0] << endl;
     return 0;
 }
+
